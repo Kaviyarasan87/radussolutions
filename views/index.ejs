@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Text Submission</title>
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Main Heading -->
+    <h1>Submit Your Text</h1>
+
+    <!-- Form to Submit New Text -->
+    <form action="/submit" method="POST">
+        <textarea name="text" rows="5" cols="40" placeholder="Enter your text here..." required></textarea>
+        <button type="submit">Submit</button>
+    </form>
+
+    <!-- Search Bar -->
+    <div id="search-bar">
+          <!--<input type="text" name="q" value="<%= search %>" placeholder="Search texts">-->
+        <form method="GET" action="/" style="display:inline;">
+            <input type="text" name="q" value="<%= search %>" placeholder="Search texts">
+            <button class="sibi" type="submit">Search</button>
+        </form>
+    </div>
+
+    <!-- Display Submitted Texts -->
+    <h2>Submitted Texts</h2>
+    <ul>
+        <% texts.forEach(function(text) { %>
+            <li>
+                <!-- Edit Form -->
+                <form action="/edit/<%= text.id %>" method="POST">
+                    <textarea name="text" rows="5" cols="40"><%= text.content %></textarea>
+                    <button type="submit">Edit</button>
+                </form>
+
+                <!-- Delete Button -->
+                <form action="/delete/<%= text.id %>" method="POST" style="display:inline;">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        <% }); %>
+    </ul>
+</body>
+</html>
