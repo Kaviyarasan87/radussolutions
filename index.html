@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Storage Website</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Styling the page for a clean and attractive look */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 60%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+        }
+
+        #saveButton {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #saveButton:hover {
+            background-color: #4cae4c;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .text-display {
+            margin-top: 20px;
+        }
+
+        .text-card {
+            background-color: #f7f7f7;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+
+        .text-card pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .text-card button {
+            background-color: #f0ad4e;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .text-card button.delete-btn {
+            background-color: #d9534f;
+            margin-left: 10px;
+        }
+
+        .text-card button:hover {
+            opacity: 0.8;
+        }
+
+        /* Centering elements and aligning content */
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+            }
+
+            textarea {
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Store Your Text</h1>
+        <textarea id="userInput" placeholder="Enter your text here..."></textarea>
+        <button id="saveButton">Save Text</button>
+
+        <input type="text" id="searchInput" placeholder="Search stored texts...">
+
+        <div class="text-display" id="displayArea">
+            <h2>Stored Text:</h2>
+            <div id="storedTexts"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the Firebase modules you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKqtXpAtVO3mDfq7QdRsZNhORmyivgl80",
+            authDomain: "copy-text-4436d.firebaseapp.com",
+            projectId: "copy-text-4436d",
+            storageBucket: "copy-text-4436d.appspot.com",
+            messagingSenderId: "659777122240",
+            appId: "1:659777122240:web:534c31ace947efe09fe225",
+            measurementId: "G-3L18QMEH0E",
+            databaseURL: "https://copy-text-4436d-default-rtdb.firebaseio.com/"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        const saveButton = document.getElementById('saveButton');
+        const userInput = document.getElementById('userInput');
+        const storedTexts = document.getElementById('storedTexts');
+        const searchInput = document.getElementById('searchInput');
+
+        // Load texts from Firebase
+        function loadTexts() {
+            const textsRef = ref(database, 'texts/');
+            onValue(textsRef, (snapshot) => {
+                const data = snapshot.val();
+                const texts = data ? Object.entries(data).map(([id, text]) => ({ id, text })) : [];
+                displayTexts(texts);
+            });
+        }
+
+        // Display texts with edit and delete options
+        function displayTexts(texts) {
+            storedTexts.innerHTML = texts.map(({ id, text }) => `
+                <div class="text-card">
+                    <pre>${text}</pre>
+                    <button onclick="editText('${id}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteText('${id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Save text to Firebase
+        saveButton.addEventListener('click', () => {
+            const text = userInput.value.trim();
+            if (text) {
+                const textsRef = ref(database, 'texts/');
+                push(textsRef, text);
+                userInput.value = ''; // Clear input
+            }
+        });
+
+        // Delete a text from Firebase
+        window.deleteText = function (id) {
+            const textRef = ref(database, `texts/${id}`);
+            remove(textRef);
+        };
+
+        // Edit a text in Firebase
+        window.editText = function (id) {
+            const newText = prompt("Edit your text:");
+            if (newText && newText.trim() !== "") {
+                const textRef = ref(database, `texts/${id}`);
+                update(textRef, newText.trim());
+            }
+        };
+
+        // Filter texts based on search input
+        searchInput.addEventListener('input', () => {
+            const searchText = searchInput.value.toLowerCase();
+            const textsRef = ref(database, 'texts/');
+            onValue(textsRef, (snapshot) => {
+                const data = snapshot.val();
+                const texts = data ? Object.entries(data).map(([id, text]) => ({ id, text })) : [];
+                const filteredTexts = texts.filter(({ text }) => text.toLowerCase().includes(searchText));
+                displayTexts(filteredTexts);
+            });
+        });
+
+        // Initial load
+        loadTexts();
+    </script>
+
+</body>
+</html>
